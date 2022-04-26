@@ -88,9 +88,9 @@ func (ws *WSService) WSEventHandler(ev event.IEvent) {
 	case WPT_DisConnected:
 		pack.MsgProcessor.DisConnectedRoute(pack.ClientId)
 	case WPT_UnknownPack:
-		pack.MsgProcessor.UnknownMsgRoute(pack.Data,pack.ClientId)
+		pack.MsgProcessor.UnknownMsgRoute(pack.ClientId,pack.Data)
 	case WPT_Pack:
-		pack.MsgProcessor.MsgRoute(pack.Data, pack.ClientId)
+		pack.MsgProcessor.MsgRoute(pack.ClientId,pack.Data)
 	}
 }
 
@@ -131,7 +131,7 @@ func (slf *WSClient) Run() {
 			log.Debug("read client id %d is error:%+v",slf.id,err)
 			break
 		}
-		data,err:=slf.wsService.process.Unmarshal(bytes)
+		data,err:=slf.wsService.process.Unmarshal(slf.id,bytes)
 		if err != nil {
 			slf.wsService.NotifyEvent(&event.Event{Type:event.Sys_Event_WebSocket,Data:&WSPack{ClientId:slf.id,Type:WPT_UnknownPack,Data:bytes,MsgProcessor:slf.wsService.process}})
 			continue
@@ -156,7 +156,7 @@ func (ws *WSService) SendMsg(clientid uint64,msg interface{}) error{
 	}
 
 	ws.mapClientLocker.Unlock()
-	bytes,err := ws.process.Marshal(msg)
+	bytes,err := ws.process.Marshal(clientid,msg)
 	if err != nil {
 		return err
 	}
